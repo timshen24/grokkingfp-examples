@@ -3,17 +3,18 @@ lazy val root = (project in file("."))
     name            := "grokkingfp-examples",
     organization    := "Michał Płachta (Manning)",
     version         := "1.0",
-    scalaVersion    := "3.2.2",
-    scalacOptions ++= List("-unchecked"),
+    scalaVersion    := "3.3.0",
+    scalacOptions ++= List("-unchecked", "-deprecation", "-explain"),
     libraryDependencies ++= Seq(
-      "org.typelevel"     %% "cats-effect"      % "3.4.9",
-      "co.fs2"            %% "fs2-core"         % "3.6.1",
-      "org.scalatest"     %% "scalatest"        % "3.2.15"   % Test,
-      "org.scalatestplus" %% "scalacheck-1-15"  % "3.2.11.0" % Test,
+      "org.typelevel"     %% "cats-effect"      % "3.5.1",
+      "org.typelevel"     %% "cats-effect"      % "3.4.10",
+      "co.fs2"            %% "fs2-core"         % "3.7.0",
+      "org.scalatest"     %% "scalatest"        % "3.2.16"   % Test,
+      "org.scalatestplus" %% "scalacheck-1-16"  % "3.2.14.0" % Test,
       // imperative libraries:
       "com.typesafe.akka"  % "akka-actor_2.13"  % "2.6.20",
-      "org.apache.jena"    % "apache-jena-libs" % "4.7.0",
-      "org.apache.jena"    % "jena-fuseki-main" % "4.7.0",
+      "org.apache.jena"    % "apache-jena-libs" % "4.8.0",
+      "org.apache.jena"    % "jena-fuseki-main" % "4.8.0",
       "org.slf4j"          % "slf4j-nop"        % "2.0.7"
     ),
     initialCommands := s"""
