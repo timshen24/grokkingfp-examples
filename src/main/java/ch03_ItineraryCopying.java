@@ -2,6 +2,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ch03_ItineraryCopying {
+    /**
+     * 不好，plan.add后影响了形参
+     * @param plan
+     * @param newCity
+     * @param beforeCity
+     * @return
+     */
     static List<String> replan(List<String> plan,
                                String newCity,
                                String beforeCity) {
@@ -10,6 +17,13 @@ public class ch03_ItineraryCopying {
         return plan;
     }
 
+    /**
+     * 这个是好的
+     * @param plan
+     * @param newCity
+     * @param beforeCity
+     * @return
+     */
     static List<String> replanPure(List<String> plan,
                                String newCity,
                                String beforeCity) { // named replan in the book

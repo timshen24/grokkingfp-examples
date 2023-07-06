@@ -3,6 +3,9 @@ import java.util.List;
 
 // Coffee Break exercise
 public class ch02_TipCalculation {
+    /**
+     * 
+     */
     class TipCalculatorBad { // named TipCalculator in the book
         private List<String> names = new ArrayList<>();
         private int tipPercentage = 0;

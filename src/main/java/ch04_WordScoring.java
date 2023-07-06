@@ -37,19 +37,43 @@ public class ch04_WordScoring {
         }
     };
 
+    /**
+     * 这个不好，会改变原始列表words
+     * @param words
+     * @return
+     */
     static List<String> rankedWordsMutable(List<String> words) { // named rankedWords in the book
         words.sort(scoreComparator);
         return words;
     }
 
+    /**
+     * 这个好一点，但是依赖了外部变量scoreComparator，仍然不是Pure Function
+     * @param words
+     * @return
+     */
     static List<String> rankedWords(List<String> words) {
         return words.stream().sorted(scoreComparator).collect(Collectors.toList());
     }
 
+    /**
+     * 现在看似可以了，但一旦comparator有好几个，会写很多boilerplate代码
+     * 而且，其实我们传递的是一种排序的行为，那就自然想到，第一个参数可以传函数进去
+     * @param comparator
+     * @param words
+     * @return
+     */
     static List<String> rankedWords(Comparator<String> comparator, List<String> words) {
         return words.stream().sorted(comparator).collect(Collectors.toList());
     }
 
+    /**
+     * 这个又更好一点，尽量消除一些boilerplate代码，只会在rankedWords里写一遍
+     * 存在的问题：啰嗦；List<String>是mutable的
+     * @param wordScore
+     * @param words
+     * @return
+     */
     static List<String> rankedWords(Function<String, Integer> wordScore, List<String> words) {
         Comparator<String> wordComparator = (w1, w2) -> Integer.compare(wordScore.apply(w2), wordScore.apply(w1));
         return words.stream().sorted(wordComparator).collect(Collectors.toList());

@@ -53,7 +53,7 @@ public class ch08_SchedulingMeetingsImpure {
      *
      * These are not an example of FP code, but a simplistic simulation of how some an external API may behave.
      * Note that we can't change an external API and need to work with how it works (so no change in these functions!).
-     * Note that we don't consider any security pitfalls her for the sake of a cleaner presentation.
+     * Note that we don't consider any security pitfalls here for the sake of a cleaner presentation.
      * Note that most likely this should return a raw JSON, not a List[Meeting], but it doesn't matter here, plus
      * we already know how to deal with parsing.
      */

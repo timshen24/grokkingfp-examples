@@ -11,6 +11,11 @@ public class ch03_LapTimes {
         return sum;
     }
 
+    /**
+     * 不好，会导致调两次totalTime，多删除一圈记录。其实只应该调一次
+     * @param lapTimes
+     * @return
+     */
     static double avgTime(List<Double> lapTimes) {
         double time = totalTime(lapTimes);
         int laps = lapTimes.size();

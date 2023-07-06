@@ -40,6 +40,12 @@ object ch05_Events extends App {
     assert(parse("", 1939, 1945) == None)
     assert(parse("Event", 1949, 1945) == None)
 
+    /**
+      * 这章的重点在我看来就是for yield表达式里做filter，作者推荐的是这种方式
+      *
+      * @param radius
+      * @return
+      */
     // Coffee break: Parsing with Option
     def validateLength(start: Int, end: Int, minLength: Int): Option[Int] =
       if (end - start >= minLength) Some(end - start) else None

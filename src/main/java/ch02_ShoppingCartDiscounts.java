@@ -3,6 +3,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class ch02_ShoppingCartDiscounts {
+    // 不好，getItems().remove("Book")后，getDiscountPercentage()无法同步更新状态，就bug了
     static class ShoppingCartBad { // named ShoppingCart in the book
         private List<String> items = new ArrayList<>();
         private boolean bookAdded = false;
@@ -51,6 +52,9 @@ public class ch02_ShoppingCartDiscounts {
         }
     }
 
+    /**
+     * 仍然有问题addItem("book");addItem("book");removeItem("book")后，应该还有一本书，但是bookAdded已经为false了
+     */
     static class ShoppingCartWithRemove { // named ShoppingCart in the book
         private List<String> items = new ArrayList<>();
         private boolean bookAdded = false;
@@ -82,6 +86,9 @@ public class ch02_ShoppingCartDiscounts {
         }
     }
 
+    /**
+     * 还是不好，boilerplate code太多了，不简洁
+     */
     static class ShoppingCartRecalculating { // named ShoppingCart in the book
         private List<String> items = new ArrayList<>();
 
@@ -106,6 +113,9 @@ public class ch02_ShoppingCartDiscounts {
         }
     }
 
+    /**
+     * 这是最好的
+     */
     static class ShoppingCart {
         public static int getDiscountPercentage(List<String> items) {
             if(items.contains("Book")) {

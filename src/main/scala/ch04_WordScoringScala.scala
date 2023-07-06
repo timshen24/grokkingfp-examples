@@ -102,6 +102,9 @@ object ch04_WordScoringScala extends App {
 
     // see "Practicing filter" in ch04_PassingFunctions
 
+    /**
+      * 不好，大量的不必要的重复
+      */
     // RETURNING FUNCTIONS #0: problem
     {
       def highScoringWords(wordScore: String => Int, words: List[String]): List[String] = {
@@ -133,6 +136,9 @@ object ch04_WordScoringScala extends App {
         words.filter(word => wordScore(word) > higherThan)
       }
 
+      /**
+        * 好一点点，但没好到哪里去
+        */
       // PROBLEM still there:
       val result  = highScoringWords(w => score(w) + bonus(w) - penalty(w), words, 1)
       println(result)
@@ -146,6 +152,9 @@ object ch04_WordScoringScala extends App {
     }
 
     // RETURNING FUNCTIONS #2: function returns a function
+    /**
+      * 这个是好的做法。
+      */
     {
       def highScoringWords(wordScore: String => Int, words: List[String]): Int => List[String] = { higherThan =>
         words.filter(word => wordScore(word) > higherThan)
@@ -169,6 +178,9 @@ object ch04_WordScoringScala extends App {
     // see "Returning functions from functions" in ch04_ReturningFunctions
 
     // RETURNING FUNCTIONS #3: PROBLEM
+    /**
+      * 只要words的List一变，就又出现重复了
+      */
     {
       def highScoringWords(wordScore: String => Int, words: List[String]): Int => List[String] = { higherThan =>
         words.filter(word => wordScore(word) > higherThan)
@@ -207,6 +219,9 @@ object ch04_WordScoringScala extends App {
     }
 
     // RETURNING FUNCTIONS #4: returning functions from functions that return functions
+    /**
+      * 这样来解决
+      */
     {
       def highScoringWords(wordScore: String => Int): Int => List[String] => List[String] = { higherThan => words =>
         words.filter(word => wordScore(word) > higherThan)
@@ -243,6 +258,9 @@ object ch04_WordScoringScala extends App {
     }
 
     // RETURNING FUNCTIONS #5: currying
+    /**
+      * 注意和上面一段比，虽然性质是一样的，但是柯里化后更好读
+      */
     {
       def highScoringWords(wordScore: String => Int)(higherThan: Int)(words: List[String]): List[String] = {
         words.filter(word => wordScore(word) > higherThan)

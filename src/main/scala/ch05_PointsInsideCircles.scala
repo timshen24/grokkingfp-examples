@@ -51,6 +51,12 @@ object ch05_PointsInsideCircles extends App {
   // Coffee Break: Filtering Techniques
   val riskyRadiuses = List(-10, 0, 2)
 
+  for {
+    r <- riskyRadiuses
+    if r > 0
+    point <- points.filter(isInside(_, r))
+  } yield s"$point is within a radius of $r"
+
   assert((for {
     r     <- riskyRadiuses
     point <- points.filter(p => isInside(p, r))
@@ -75,6 +81,11 @@ object ch05_PointsInsideCircles extends App {
     if isInside(point, r)
   } yield s"$point is within a radius of $r") == List("Point(1,1) is within a radius of 2"))
 
+  /**
+    * 这章的重点在我看来就是for yield表达式里做filter，作者推荐的是这种方式
+    * @param radius
+    * @return
+    */
   // using flatMap
   def validateRadius(radius: Int): List[Int] = if (radius > 0) List(radius) else List.empty
 

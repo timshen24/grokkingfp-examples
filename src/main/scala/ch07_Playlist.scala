@@ -47,6 +47,13 @@ object ch07_Playlist extends App {
     List(Song(fooFighters, "My Hero"), Song(Artist("Iron Maiden"), "The Trooper"))
   )
 
+  /**
+    * 这一章节的精华在于List[Playlist]=>List[Song]不一定用map或者filter实现，foldLeft同样可以，而且可能更好
+    * @param playlists
+    * @param artist
+    * @param genre
+    * @return
+    */
   def gatherSongs(playlists: List[Playlist], artist: Artist, genre: MusicGenre): List[Song] =
     playlists.foldLeft(List.empty[Song])((songs, playlist) =>
       val matchingSongs = playlist.kind match {
@@ -57,8 +64,31 @@ object ch07_Playlist extends App {
       songs.appendedAll(matchingSongs)
     )
 
+  /**
+    * 用flatMap实现也可以
+    * @param playlists
+    * @param artist
+    * @param genre
+    * @return
+    */
+  def gatherSongsWithMap(playlists: List[Playlist], artist: Artist, genre: MusicGenre): List[Song] = {
+    playlists.flatMap { playlist =>
+      playlist.kind match {
+        case CuratedByUser(user) => playlist.songs.filter(_.artist == artist)
+        case BasedOnArtist(playlistArtist) => if (playlistArtist == artist) playlist.songs else List.empty
+        case BasedOnGenres(genres) => if (genres.contains(genre)) playlist.songs else List.empty
+      }
+    }
+  }
+
+
   assert(
     gatherSongs(List(playlist1, playlist2, playlist3), fooFighters, Funk)
+      == playlist1.songs.appendedAll(playlist2.songs).appended(Song(fooFighters, "My Hero"))
+  )
+
+  assert(
+    gatherSongsWithMap(List(playlist1, playlist2, playlist3), fooFighters, Funk)
       == playlist1.songs.appendedAll(playlist2.songs).appended(Song(fooFighters, "My Hero"))
   )
 }

@@ -96,6 +96,7 @@ object ch09_CurrencyExchange {
     println(s"Current USD currency exchange table: ${usdTable.unsafeRunSync()}")
   }
 
+  // 这个不好，因为用数字指定索引很容易ArrayOutofBounds Exception
   def naiveTrending(rates: List[BigDecimal]): Boolean = {
     rates(0) < rates(1) && rates(1) < rates(2)
   }
@@ -138,11 +139,9 @@ object ch09_CurrencyExchange {
     rates.size > 1 &&
     rates
       .zip(rates.drop(1))
-      .forall(ratePair =>
-        ratePair match {
-          case (previousRate, rate) => rate > previousRate
-        }
-      )
+      .forall {
+        case (previousRate, rate) => rate > previousRate
+      }
   }
 
   private def runTrending = {
@@ -182,7 +181,7 @@ object ch09_CurrencyExchange {
     assert(usdExchangeTables.map(extractSingleCurrencyRate(Currency("BTC"))) == List(None, None, None))
     assert(List.empty.map(extractSingleCurrencyRate(Currency("EUR"))) == List.empty)
 
-    { // alternative implementation
+    { // alternative implementation This method is better!
       def extractSingleCurrencyRate2(
           currencyToExtract: Currency
       )(table: Map[Currency, BigDecimal]): Option[BigDecimal] = {
@@ -208,11 +207,9 @@ object ch09_CurrencyExchange {
     */
   def exchangeTable(from: Currency): IO[Map[Currency, BigDecimal]] = {
     IO.delay(exchangeRatesTableApiCall(from.name)).map(table =>
-      table.map(kv =>
-        kv.match {
-          case (currencyName, rate) => (Currency(currencyName), rate)
-        }
-      )
+      table.map{
+        case (currencyName, rate) => (Currency(currencyName), rate)
+      }
     )
   }
 
@@ -221,6 +218,7 @@ object ch09_CurrencyExchange {
   }
 
   object Version1 {
+    // 这个版本的缺陷是只能调三次API 如何把它优化？还是用Recursion，见currencyRate方法
     def lastRates(from: Currency, to: Currency): IO[List[BigDecimal]] = {
       for {
         table1    <- retry(exchangeTable(from), 10)
@@ -302,6 +300,12 @@ object ch09_CurrencyExchange {
     assert(exchangeIfTrending(BigDecimal(1000), Currency("USD"), Currency("EUR")).unsafeRunSync() > 750)
   }
 
+  /**
+    * Coffee Break 无限调用API，直到成功为止就是在这步里做的
+    * @param from
+    * @param to
+    * @return
+    */
   def currencyRate(from: Currency, to: Currency): IO[BigDecimal] = {
     for {
       table <- retry(exchangeTable(from), 10)
@@ -312,6 +316,13 @@ object ch09_CurrencyExchange {
     } yield rate
   }
 
+  /**
+    * 用sequence的方法实现List[BigDecimal]的长度为10个
+    * @param from
+    * @param to
+    * @param n 这个例子里，我们取3，因为3个数字构成一个trending
+    * @return
+    */
   def lastRatesCh8(from: Currency, to: Currency, n: Int): IO[List[BigDecimal]] = {
     List.range(0, n).map(_ => currencyRate(from, to)).sequence
   }
@@ -322,6 +333,13 @@ object ch09_CurrencyExchange {
   }
 
   object Version2 {
+    /**
+      * 用recursion的方法实现List[BigDecimal]的长度为10个
+      * @param from
+      * @param to
+      * @param n 这个例子里，我们取3，因为3个数字构成一个trending
+      * @return
+      */
     def lastRates(from: Currency, to: Currency, n: Int): IO[List[BigDecimal]] = {
       if (n < 1) {
         IO.pure(List.empty)
@@ -333,6 +351,13 @@ object ch09_CurrencyExchange {
       }
     }
 
+    /**
+      * 从这个代码看出，他每一步真的切得很小，组成了一个Jigsaw Puzzle
+      * @param amount
+      * @param from
+      * @param to
+      * @return
+      */
     def exchangeIfTrending(amount: BigDecimal, from: Currency, to: Currency): IO[BigDecimal] = {
       for {
         rates  <- lastRates(from, to, 3)

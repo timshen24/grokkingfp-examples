@@ -6,7 +6,7 @@ import org.apache.jena.query.QuerySolution
 
 object ch11_WikidataDataAccess {
 
-  def getSparqlDataAccess(execQuery: String => IO[List[QuerySolution]]): DataAccess = new DataAccess {
+  def getSparqlDataAccess(execQueryWithConnection: String => IO[List[QuerySolution]]): DataAccess = new DataAccess {
     val prefixes = """
         |PREFIX wd: <http://www.wikidata.org/entity/>
         |PREFIX wdt: <http://www.wikidata.org/prop/direct/>
@@ -42,9 +42,9 @@ object ch11_WikidataDataAccess {
         |""".stripMargin
 
       for {
-        solutions   <- execQuery(query)
+        solutions   <- execQueryWithConnection(query)
         attractions <- IO.delay(
-                         solutions.map(s =>
+                         solutions.map[Attraction](s =>
                            Attraction( // introduce named parameters
                              name = s.getLiteral("attractionLabel").getString,
                              description =
@@ -75,7 +75,7 @@ object ch11_WikidataDataAccess {
         |""".stripMargin
 
       for {
-        solutions <- execQuery(query)
+        solutions <- execQueryWithConnection(query)
         artists   <-
           IO.delay(
             solutions.map[Artist](s =>
@@ -101,7 +101,7 @@ object ch11_WikidataDataAccess {
         |""".stripMargin
 
       for {
-        solutions <- execQuery(query)
+        solutions <- execQueryWithConnection(query)
         movies    <- IO.delay(
                        solutions.map[Movie](s =>
                          Movie(name = s.getLiteral("subjectLabel").getString, boxOffice = s.getLiteral("boxOffice").getInt)

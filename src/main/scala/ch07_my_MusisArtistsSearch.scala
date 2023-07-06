@@ -1,14 +1,14 @@
-object ch07_MusicArtistsSearch extends App {
-  // STEP 0: Design using what we know (primitive types)
+
+object ch07_my_MusisArtistsSearch extends App {
   object Version0 {
     case class Artist(
-        name: String,
-        genre: String,
-        origin: String,
-        yearsActiveStart: Int,
-        isActive: Boolean,
-        yearsActiveEnd: Int
-    )
+                       name: String,
+                       genre: String,
+                       origin: String,
+                       yearsActiveStart: Int,
+                       isActive: Boolean,
+                       yearsActiveEnd: Int
+                     )
 
     val artists = List(
       Artist("Metallica", "Heavy Metal", "U.S.", 1981, true, 0),
@@ -17,13 +17,13 @@ object ch07_MusicArtistsSearch extends App {
     )
 
     def searchArtists(
-        artists: List[Artist],
-        genres: List[String],
-        locations: List[String],
-        searchByActiveYears: Boolean,
-        activeAfter: Int,
-        activeBefore: Int
-    ): List[Artist] = artists.filter(artist =>
+                       artists: List[Artist],
+                       genres: List[String],
+                       locations: List[String],
+                       searchByActiveYears: Boolean,
+                       activeAfter: Int,
+                       activeBefore: Int
+                     ): List[Artist] = artists.filter(artist =>
       (genres.isEmpty || genres.contains(artist.genre)) &&
         (locations.isEmpty || locations.contains(artist.origin)) &&
         (!searchByActiveYears || (artist.isActive || artist.yearsActiveEnd >= activeAfter) &&
@@ -33,7 +33,6 @@ object ch07_MusicArtistsSearch extends App {
 
   {
     import Version0._
-
     // coffee break cases:
     assert(searchArtists(artists, List("Pop"), List("England"), true, 1950, 2022) == List(Artist(
       "Bee Gees",
@@ -88,18 +87,15 @@ object ch07_MusicArtistsSearch extends App {
       ))
   }
 
-  // STEP 1: newtypes
-  // In Scala, you could also use opaque types to encode newtypes:
   object model {
     opaque type Location = String
 
     object Location {
-      def apply(value: String): Location = value // <- you can use a String as a Location only in the scope of model
+      def apply(value: String): Location = value
 
       extension (a: Location) def name: String = a
     }
 
-    // Practicing newtypes
     opaque type Genre = String
 
     object Genre {
@@ -125,10 +121,7 @@ object ch07_MusicArtistsSearch extends App {
     }
   }
 
-  import model._
-
-  val us: Location = Location("U.S.")
-  // val wontCompile: Location = "U.S." // <- String can't be used as a Location outside of the scope of model
+  import ch07_my_MusisArtistsSearch.model._
 
   object Version1 {
     case class Artist(
@@ -177,7 +170,9 @@ object ch07_MusicArtistsSearch extends App {
       List(Artist("Bee Gees", Genre("Pop"), Location("England"), YearsActiveStart(1958), false, YearsActiveEnd(2003))))
   }
 
-  // STEP 2a: Option type (reverted all newtypes except of origin, because we'll make them better)
+  /**
+    * 换一种实现，把Verison2里Artist的isActive和yearsActiveEnd合并成一个Option类型。以后看到开关变量就要想到Option类型
+    */
   object Version2a {
     case class Artist(
                        name: String,
@@ -202,9 +197,12 @@ object ch07_MusicArtistsSearch extends App {
                        activeBefore: Int
                      ): List[Artist] = artists.filter(artist =>
       (genres.isEmpty || genres.contains(artist.genre)) &&
-        (locations.isEmpty || locations.contains(artist.origin.name)) &&
+        (locations.isEmpty || locations
+          .contains(artist.origin.name)) &&
         (!searchByActiveYears ||
-          artist.yearsActiveEnd.forall(_ >= activeAfter) && // <- using Option.forall
+          // Option里的Int和另一个Int比较可以想到forall和exists
+          // forall和exists的区别之一是当None时forall为true而exits为false
+          artist.yearsActiveEnd.forall(_ >= activeAfter) &&
             artist.yearsActiveStart <= activeBefore)
     )
   }
@@ -266,7 +264,7 @@ object ch07_MusicArtistsSearch extends App {
     assert(f1(users).map(_.name) == List("Alice", "Mallory"))
 
     // 2. users that live in Lagos
-    def f2(users: List[User]): List[User] = users.filter(_.city.contains("Lagos"))
+    def f2(users: List[User]): List[User] = users.filter(_.city.exists(_ == "Lagos"))
 
     assert(f2(users).map(_.name) == List("Bob"))
 
@@ -292,6 +290,11 @@ object ch07_MusicArtistsSearch extends App {
   }
 
   // STEP 2b: new product type
+  /**
+    * 思路：既然已经把isActive: Int和yearsActiveEnd: Int合并成了一个yearsActiveEnd: Option[Int]
+    * 为什么不把yearsActiveStart: Int也一起合并呢？
+    * 这样就形成了一个新的Product type：case class PeriodInYears(start: Int, end: Option[Int])
+    */
   object Version2b_Data {
     case class PeriodInYears(start: Int, end: Option[Int])
 
@@ -324,6 +327,7 @@ object ch07_MusicArtistsSearch extends App {
       (genres.isEmpty || genres.contains(artist.genre)) &&
         (locations.isEmpty || locations.contains(artist.origin.name)) &&
         (!searchByActiveYears ||
+          // 可以看到代码越来越少了
           artist.yearsActive.end.forall(_ >= activeAfter) && // <- using new product type (end)
             artist.yearsActive.start <= activeBefore) // <- using new product type (start)
     )
@@ -347,7 +351,6 @@ object ch07_MusicArtistsSearch extends App {
   import MusicGenre._
 
   object Version3 {
-
     import Version2b_Data.PeriodInYears
 
     case class Artist(
@@ -365,13 +368,14 @@ object ch07_MusicArtistsSearch extends App {
 
     def searchArtists(
                        artists: List[Artist],
-                       genres: List[MusicGenre], // <- now we need to make sure only valid genres are searched for
+                       genres: List[MusicGenre],
                        locations: List[String],
                        searchByActiveYears: Boolean,
                        activeAfter: Int,
                        activeBefore: Int
                      ): List[Artist] = artists.filter(artist =>
-      (genres.isEmpty || genres.contains(artist.genre)) && // no change needed
+      // no change needed when introducing MusicGenre
+      (genres.isEmpty || genres.contains(artist.genre)) &&
         (locations.isEmpty || locations.contains(artist.origin.name)) &&
         (!searchByActiveYears ||
           artist.yearsActive.end.forall(_ >= activeAfter) &&
@@ -426,8 +430,8 @@ object ch07_MusicArtistsSearch extends App {
                        activeAfter: Int,
                        activeBefore: Int
                      ): List[Artist] = artists.filter(artist =>
-      (genres.isEmpty || genres.contains(artist.genre)) && // no change needed
-        (locations.isEmpty || locations.contains(artist.origin.name)) &&
+      (genres.isEmpty || genres.contains(artist.genre)) &&
+        (locations.isEmpty || locations.contains(artist.origin)) &&
         (!searchByActiveYears || wasArtistActive(artist, activeAfter, activeBefore))
     )
   }
@@ -444,21 +448,20 @@ object ch07_MusicArtistsSearch extends App {
   { // Practicing pattern matching
     import Version4_Data._
 
-    def activeLength(artist: Artist, currentYear: Int): Int = artist.yearsActive match {
-      case StillActive(since) => currentYear - since
-      case ActiveBetween(start, end) => end - start
-    }
+    def activeLength(artist: Artist, currentYear: Int): Int = artist.yearsActive match
+      case YearsActive.StillActive(since) => currentYear - since
+      case YearsActive.ActiveBetween(start, end) => end - start
 
     assert(activeLength(Artist("Metallica", HeavyMetal, Location("U.S."), StillActive(1981)), 2022) == 41)
     assert(activeLength(Artist("Led Zeppelin", HardRock, Location("England"), ActiveBetween(1968, 1980)), 2022) == 12)
     assert(activeLength(Artist("Bee Gees", Pop, Location("England"), ActiveBetween(1958, 2003)), 2022) == 45)
   }
 
-  { // STEP 5: modeling behaviors
+  { // STEP 5: modeling behaviors -- treating requirements as data
     import Version4_Data._
     import Version4_Behavior.wasArtistActive
 
-    // Modeling conditions as ADTs:
+    // Modeling search requirement conditions as ADTs to further eliminate obscure input parameters:
     enum SearchCondition {
       case SearchByGenre(genres: List[MusicGenre])
       case SearchByOrigin(locations: List[Location])
@@ -467,10 +470,20 @@ object ch07_MusicArtistsSearch extends App {
 
     import SearchCondition._
 
+    /**
+      * Thus we can use some, all or none of the conditions of `SearchCondition`.
+      * All we need to do is to construct the `requiredConditions` to meet our need
+      * @param artists
+      * @param requiredConditions
+      * @return
+      */
     def searchArtists(
                        artists: List[Artist],
                        requiredConditions: List[SearchCondition]
                      ): List[Artist] = artists.filter(artist =>
+      // We need to return a Boolean true if all conditions in requiredConditions are satisfied by a given artist
+      // and false if at least one of them isn’t.
+      // So we can use forall!!!
       requiredConditions.forall {
         case SearchByGenre(genres) => genres.contains(artist.genre)
         case SearchByOrigin(locations) => locations.contains(artist.origin)
@@ -551,12 +564,17 @@ object ch07_MusicArtistsSearch extends App {
     ) == List.empty)
   }
 
+  // Final task:
   // NEW REQUIREMENTS:
+  // Change in the model—
+  // Support the fact that some artists take breaks. For example, the Bee Gees were active from 1958 to 2003 and then from 2009 to 2012.
+  // New search condition—
+  // The searchArtists functions should handle the new search condition: return artists that have been (or were) active for a given number of years (in total).
   {
     case class PeriodInYears(start: Int, end: Int)
 
     enum YearsActive {
-      case StillActive(since: Int, previousPeriods: List[PeriodInYears])
+      case StillActive(since: Int, periods: List[PeriodInYears])
       case ActiveInPast(periods: List[PeriodInYears])
     }
 
@@ -594,6 +612,7 @@ object ch07_MusicArtistsSearch extends App {
           case SearchByGenre(genres) => genres.contains(artist.genre)
           case SearchByOrigin(locations) => locations.contains(artist.origin)
           case SearchByActiveYears(period) => wasArtistActive(artist, period)
+          // 注意这个until参数是从外部传入的
           case SearchByActiveLength(howLong, until) => activeLength(artist, until) >= howLong
         }
     )

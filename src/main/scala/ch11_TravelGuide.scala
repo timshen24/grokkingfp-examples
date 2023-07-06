@@ -1,14 +1,30 @@
-import cats.effect.{IO, Ref, Resource}
-import cats.implicits._
 import cats.effect.unsafe.implicits.global
+import cats.effect.{IO, Ref, Resource}
+import cats.implicits.*
 import ch11_WikidataDataAccess.getSparqlDataAccess
 import org.apache.jena.query.{QueryExecution, QueryFactory, QuerySolution}
 import org.apache.jena.rdfconnection.{RDFConnection, RDFConnectionRemote}
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 import scala.jdk.javaapi.CollectionConverters.asScala
 
 object ch11_TravelGuide {
+
+  /** Requirements: Pop culture travel guide
+    * 1. The application should take a single String value: a search term for the tourist attraction that the user wants to visit and needs a travel guide for.
+    * 2. The application needs to search for a given attraction, its description (if it exists), and its geographical location.
+    *    It should prefer locations with larger populations.
+    * 3. The application should use a location to do as follows:
+    *    Find artists originating from this location, sorted by the number of social media followers
+    *    Find movies that take place in this location, sorted by the box office earnings
+    * 4. For a given tourist attraction, artists and movies form its “pop culture travel guide” that should be returned to the user.
+    *    If there are more possible guides, the application needs to return the one with the highest score, which is calculated as follows:
+    *      30 points for a description
+    *      10 points for each artist or movie (max. 40 points)
+    *      1 point for each 100,000 followers (all artists combined; max. 15 points)
+    *      1 point for each $10,000,000 in box office earnings (all movies combined; max. 15 points)
+    * 5. We will add support for more pop culture subjects in the future (e.g., video games).
+    */
 
   /** STEP 1
     * MODEL: just immutable values (reused in the whole application).
@@ -33,7 +49,8 @@ object ch11_TravelGuide {
     case class TravelGuide(attraction: Attraction, subjects: List[PopCultureSubject])
   }
 
-  import model._, model.PopCultureSubject._
+  import model.*
+  import model.PopCultureSubject.*
 
   /** STEP 2
     * DATA ACCESS (just an interface providing pure functions, implementation completely separated)
@@ -42,7 +59,7 @@ object ch11_TravelGuide {
     case ByName
     case ByLocationPopulation
   }
-  import AttractionOrdering._
+  import AttractionOrdering.*
 
   trait DataAccess {
     def findAttractions(name: String, ordering: AttractionOrdering, limit: Int): IO[List[Attraction]]
@@ -61,15 +78,21 @@ object ch11_TravelGuide {
   /** STEP 3: first version of a TravelGuide finder
     */
   object Version1 {
+    // 输入参数实现多态
     def travelGuide(data: DataAccess, attractionName: String): IO[Option[TravelGuide]] = {
       for {
         attractions <- data.findAttractions(attractionName, ByLocationPopulation, 1)
         guide       <- attractions.headOption match {
                          case None             => IO.pure(None)
-                         case Some(attraction) => for {
+                         case Some(attraction) =>
+                           for {
                              artists <- data.findArtistsFromLocation(attraction.location.id, 2)
                              movies  <- data.findMoviesAboutLocation(attraction.location.id, 2)
-                           } yield Some(TravelGuide(attraction, artists.appendedAll(movies)))
+                           } yield Some(TravelGuide(
+                             attraction,
+                             // At this moment, haven't done sort yet
+                             artists.appendedAll(movies)
+                           ))
                        }
       } yield guide
     }

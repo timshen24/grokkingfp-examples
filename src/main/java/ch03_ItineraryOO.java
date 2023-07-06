@@ -2,6 +2,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * 不好，会改变形参；怎么解决见Scala
+ */
 public class ch03_ItineraryOO {
     private List<String> plan = new ArrayList<>();
 

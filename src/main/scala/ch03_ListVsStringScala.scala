@@ -2,7 +2,8 @@ object ch03_ListVsStringScala extends App {
   {
     val ab   = List("a", "b")
     val cd   = List("c", "d")
-    val abcd = ab.appendedAll(cd)
+//    val abcd = ab.appendedAll(cd)
+    val abcd = ab ::: cd
     assert(abcd == List("a", "b", "c", "d"))
 
     assert(ab.size == 2)

@@ -173,6 +173,9 @@ object ch06_TvShows extends App {
     val bracketOpen  = rawShow.indexOf('(')
     val bracketClose = rawShow.indexOf(')')
     for {
+      /**
+        * 第一个重点
+        */
       yearStr <- if (dash == -1 && bracketOpen != -1 && bracketClose > bracketOpen + 1)
                    Some(rawShow.substring(bracketOpen + 1, bracketClose))
                  else None
@@ -180,6 +183,11 @@ object ch06_TvShows extends App {
     } yield year
   }
 
+  /**
+    * 第二个重点
+    * @param rawShow
+    * @return
+    */
   // STEP 1d: using Option and orElse
   def parseShow(rawShow: String): Option[TvShow] = {
     for {
@@ -304,6 +312,11 @@ object ch06_TvShows extends App {
   assert(addOrResign(None, Some(TvShow("Chernobyl", 2019, 2019))) == None)
   assert(addOrResign(None, None) == None)
 
+  /**
+    * 第三个重点 traverse可以用List[A].foldLeft(Some(List.empty[A])(op: (Some(List[A]), Some(A)) => Some(List[A]))实现
+    * @param rawShows
+    * @return
+    */
   // STEP 2b: implementing the "all-or-nothing" error handling strategy
   def parseShows(rawShows: List[String]): Option[List[TvShow]] = {
     val initialResult: Option[List[TvShow]] = Some(List.empty)
@@ -350,6 +363,9 @@ object ch06_TvShows extends App {
       def extractYearStart(rawShow: String): Either[String, Int] = {
         val bracketOpen   = rawShow.indexOf('(')
         val dash          = rawShow.indexOf('-')
+        /**
+          * 第四个重点
+          */
         val yearStrEither =
           if (bracketOpen != -1 && dash > bracketOpen + 1) Right(rawShow.substring(bracketOpen + 1, dash))
           else Left(s"Can't extract start year from $rawShow")
@@ -451,6 +467,9 @@ object ch06_TvShows extends App {
     assert(parseShow("(2002-2008)") == Left("Can't extract name from (2002-2008)"))
     assert(parseShow("The Wire (2002-2008)") == Right(TvShow("The Wire", 2002, 2008)))
 
+    /**
+      * 第五个重点，用FP可以大量减少if else代码
+      */
     { // Practicing functional error handling with Either
       def extractSingleYearOrYearEnd(rawShow: String): Either[String, Int] =
         extractSingleYear(rawShow).orElse(extractYearEnd(rawShow))
@@ -459,10 +478,10 @@ object ch06_TvShows extends App {
         extractYearStart(rawShow).orElse(extractYearEnd(rawShow)).orElse(extractSingleYear(rawShow))
 
       def extractSingleYearIfNameExists(rawShow: String): Either[String, Int] =
-        extractName(rawShow).flatMap(name => extractSingleYear(rawShow))
+        extractName(rawShow).flatMap(name => extractSingleYear(rawShow)) //.orElse(...) if then ... else 还可以这么写，漂亮
 
       def extractAnyYearIfNameExists(rawShow: String): Either[String, Int] =
-        extractName(rawShow).flatMap(name => extractAnyYear(rawShow))
+        extractName(rawShow).flatMap(name => extractAnyYear(rawShow))//.orElse(...) if then ... else 还可以这么写，漂亮
 
       assert(extractSingleYearOrYearEnd("A (1992-)") == Left("Can't extract end year from A (1992-)"))
       assert(extractSingleYearOrYearEnd("B (2002)") == Right(2002))
