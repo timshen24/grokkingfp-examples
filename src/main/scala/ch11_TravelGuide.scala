@@ -229,6 +229,9 @@ object ch11_TravelGuide {
       .queryEndpoint("sparql")
       .build // we will make it better, see STEP 7
 
+    /**
+      * 注意execQuery(connection)是一个partial function
+      */
     val wikidata = getSparqlDataAccess(execQuery(connection))
 
     // now we can execute our program using the real Wikidata data access!
@@ -298,6 +301,10 @@ object ch11_TravelGuide {
     execution.close()
   )
 
+  /**
+    * 手动handle resource，完全不优雅
+    * 更重要的是一旦抛错又会leak
+    */
   private def runVersion2 = { // handling resource release manually
     def execQuery(connection: RDFConnection)(query: String): IO[List[QuerySolution]] = {
       for {
@@ -390,6 +397,7 @@ object ch11_TravelGuide {
 
   /** STEP 9: make it faster
     * we don't have to execute queries, we can cache them locally
+    * 这是execQuery的升级版
     */
   def cachedExecQuery(connection: RDFConnection, cache: Ref[IO, Map[String, List[QuerySolution]]])(
       query: String
