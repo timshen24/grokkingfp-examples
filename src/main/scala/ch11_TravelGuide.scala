@@ -11,7 +11,8 @@ import scala.jdk.javaapi.CollectionConverters.asScala
 object ch11_TravelGuide {
 
   /** Requirements: Pop culture travel guide
-    * 1. The application should take a single String value: a search term for the tourist attraction that the user wants to visit and needs a travel guide for.
+    * 1. The application should take a single String value: a search term for the tourist attraction that the user wants to visit
+    *    and needs a travel guide for.
     * 2. The application needs to search for a given attraction, its description (if it exists), and its geographical location.
     *    It should prefer locations with larger populations.
     * 3. The application should use a location to do as follows:
@@ -102,6 +103,7 @@ object ch11_TravelGuide {
     * @see [[ch11_QueryingWikidata]] for a simple Wikidata query using Apache Jena imperatively
     */
   private def runStep4 = {
+    // Get a connection
     val getConnection: IO[RDFConnection] = IO.delay(
       RDFConnectionRemote.create // we will make it better, see at the end
         .destination("https://query.wikidata.org/")
@@ -109,6 +111,7 @@ object ch11_TravelGuide {
         .build
     )
 
+    // Execute a Query
     def execQuery(getConnection: IO[RDFConnection], query: String): IO[List[QuerySolution]] = {
       getConnection.flatMap(c =>
         IO.delay(
@@ -117,6 +120,7 @@ object ch11_TravelGuide {
       )
     }
 
+    // Parse the results of the above `execQuery` function
     def parseAttraction(s: QuerySolution): IO[Attraction] = {
       IO.delay(
         Attraction(
@@ -161,6 +165,9 @@ object ch11_TravelGuide {
                      } ORDER BY $orderBy LIMIT $limit
                      """
 
+      /**
+        * 这个设计明显不好，每次调用findAttractions都要打开一个connection，而且connnection也不关闭
+        */
       for {
         solutions   <- execQuery(getConnection, query)
         attractions <- solutions.traverse(parseAttraction) // or map(parseAttraction).sequence
@@ -168,6 +175,9 @@ object ch11_TravelGuide {
     }
 
     def configuringAFunction = { // currying discussion (configuring a function)
+      /**
+        * 柯里化是一个separate concern的方法，但是还是解决不了重复创建和没有销毁connection的问题
+        */
       def findAttractions(
           connection: RDFConnection
       )(name: String, ordering: AttractionOrdering, limit: Int): IO[List[Attraction]] = ???
@@ -177,6 +187,10 @@ object ch11_TravelGuide {
       f // you should be able to use f now without knowing anything about the connection (which you should close() later)
     }
 
+    /**
+      * 首先想到的解决方法是不传Connection了，传一个execQuery: String => IO[List[QuerySolution]]的高级函数
+      * @return
+      */
     def passingAQueryingBehavior = { // functions as values discussion (passing a querying behavior)
       def findAttractions(execQuery: String => IO[List[QuerySolution]])(
           name: String,
@@ -254,6 +268,10 @@ object ch11_TravelGuide {
     descriptionScore + quantityScore + followersScore + boxOfficeScore
   }
 
+  /**
+    * 和Version1的区别在于Version1只是无脑返回第一个attraction，而Version2返回了一个List并用sequence方法整理，
+    * 把List[IO[TravelGuide]]改成了IO[List[TraverGuide]，然后sortBy后取分数最高的那个。以此实现了业务逻辑
+    */
   object Version2 {
     def travelGuide(data: DataAccess, attractionName: String): IO[Option[TravelGuide]] = {
       for {

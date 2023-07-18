@@ -42,6 +42,7 @@ object ch10_CheckIns {
 
   /** STEP 1: sequential & few ranking updates
     * (or more ranking updates, but slow)
+    * 这个实现里面的toList，map都是亮点
     */
   def topCities(cityCheckIns: Map[City, Int]): List[CityStats] = {
     cityCheckIns.toList
@@ -90,6 +91,11 @@ object ch10_CheckIns {
 
     unsafeRunTimedIO(processCheckInsRaw(checkInsSmall))
 
+    /**
+      * 更优雅的方式，updatedWith和IO.println
+      * @param checkIns
+      * @return
+      */
     def processCheckIns(checkIns: Stream[IO, City]): IO[Unit] = {
       checkIns
         .scan(Map.empty[City, Int])((cityCheckIns, city) =>
@@ -155,6 +161,7 @@ object ch10_CheckIns {
   private def parSequenceIntro = {
     val exampleSequential: IO[Int] = for {
       counter <- Ref.of[IO, Int](0)
+      // List(IO[Unit], IO[Unit], IO[Unit])调用sequence后变成IO[List(Unit)]
       _       <- List(counter.update(_ + 2), counter.update(_ + 3), counter.update(_ + 4)).sequence
       result  <- counter.get
     } yield result
