@@ -257,6 +257,7 @@ object ch08_SchedulingMeetings {
     import Version2.schedule
 
     def schedulingProgram(getName: IO[String], showMeeting: Option[MeetingTime] => IO[Unit]): IO[Unit] = {
+      // showMeeting的形参就是possibleMeeting！
       for {
         name1           <- getName
         name2           <- getName
