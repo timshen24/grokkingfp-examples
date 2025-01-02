@@ -1,19 +1,21 @@
-import cats.effect.{IO, Resource}
 import cats.effect.unsafe.implicits.global
-import cats.implicits._
-import ch11_TravelGuide._
-import ch11_TravelGuide.model._
-import ch11_TravelGuide.model.PopCultureSubject._
-import ch11_TravelGuide.AttractionOrdering._
+import cats.effect.{IO, Resource}
+import cats.implicits.*
+import ch11_TravelGuide.*
+import ch11_TravelGuide.AttractionOrdering.*
 import ch11_TravelGuide.Version3.travelGuide
+import ch11_TravelGuide.model.*
+import ch11_TravelGuide.model.PopCultureSubject.*
 import ch11_WikidataDataAccess.getSparqlDataAccess
 import ch12_TravelGuide.{SearchReport, Version4, Version5}
-import org.scalatest.funsuite.AnyFunSuite
-import org.scalacheck._, Arbitrary._, org.scalatestplus.scalacheck._
 import org.apache.jena.fuseki.main.FusekiServer
 import org.apache.jena.query.DatasetFactory
 import org.apache.jena.rdfconnection.RDFConnection
 import org.apache.jena.riot.RDFDataMgr
+import org.scalacheck.*
+import org.scalacheck.Arbitrary.*
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatestplus.scalacheck.*
 
 /** @see [[ch11_TravelGuide]] to verify requirements
   */
@@ -67,6 +69,7 @@ class ch12_TravelGuideTest extends AnyFunSuite with ScalaCheckPropertyChecks {
   }
 
   /** STEP 2: testing by providing properties
+    * ScalaCheck test1
     */
   test("guide score should not depend on its attraction's name and description strings") {
     forAll((name: String, description: String) => {
@@ -205,6 +208,8 @@ class ch12_TravelGuideTest extends AnyFunSuite with ScalaCheckPropertyChecks {
     movies         <- Gen.listOfN(numberOfMovies, randomMovie)
   } yield movies
 
+  /** randomPopCultureSubjects的实现是经典，借用了现有的两个Generator
+    */
   val randomPopCultureSubjects: Gen[List[PopCultureSubject]] = for {
     movies  <- randomMovies
     artists <- randomArtists
@@ -225,7 +230,7 @@ class ch12_TravelGuideTest extends AnyFunSuite with ScalaCheckPropertyChecks {
   }
 
   /**  STEP 3a: test side effects without using any mocking libraries
-    *  - testing using stubs
+    *  - testing using hardcoded stubs
     */
   test("travel guide should include artists originating from the attraction's location") {
     // given an external data source with an attraction named "Tower Bridge"
@@ -394,7 +399,7 @@ class ch12_TravelGuideTest extends AnyFunSuite with ScalaCheckPropertyChecks {
     */
   // this function is very straightforward and cleans up the following tests significantly.
   // What's important is what's left in the tests, how they document the function and convey this new functionality.
-  // again: using such a helper function make the tests more readable, because readers can focus on the functionality
+  // again: using such a helper function （dataAccessStub）make the tests more readable, because readers can focus on the functionality
   def dataAccessStub(
       attractions: IO[List[Attraction]],
       artists: IO[List[Artist]],

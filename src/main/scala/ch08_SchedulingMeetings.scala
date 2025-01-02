@@ -92,6 +92,7 @@ object ch08_SchedulingMeetings {
     def schedule(person1: String, person2: String, lengthHours: Int): IO[Option[MeetingTime]] = {
       for {
         existingMeetings <- scheduledMeetings(person1, person2)
+        // 找到8点到16点，长度为lengthHours，对于person1和person2都有空的会
         meetings          = possibleMeetings(existingMeetings, 8, 16, lengthHours)
       } yield meetings.headOption
     }
